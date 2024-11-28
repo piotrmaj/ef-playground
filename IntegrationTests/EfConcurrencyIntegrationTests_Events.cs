@@ -2,76 +2,24 @@ using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Reflection;
-using Testcontainers.MsSql;
 
 namespace IntegrationTests
 {
     [TestClass]
-    public class EfConcurrencyIntegrationTests_Events
+    public class EfConcurrencyIntegrationTests_Events: IntegrationTestBase
     {
-        private static MsSqlContainer _msSqlContainer = new MsSqlBuilder().WithPortBinding(1433).Build();
-        private EventsContext db;
-
-        [ClassInitialize]
-        public static void ClassInitialize(TestContext testContext)
-        {
-            int tries = 0;
-            bool success = false;
-            do
-            {
-                try
-                {
-                    _msSqlContainer.StartAsync().GetAwaiter().GetResult();
-                    success = true;
-                }
-                catch
-                {
-                    tries++;
-                    if (tries > 3)
-                    {
-                        throw;
-                    }
-                    Thread.Sleep(1000);
-                }
-            } while (!success);
-        }
-
         [TestInitialize]
         public void TestInitialize()
         {
             var optionsBuilder = new DbContextOptionsBuilder<EventsContext>();
             optionsBuilder.UseSqlServer(GetConnectionString(), b => b.MigrationsAssembly(typeof(EventsContext).GetTypeInfo().Assembly.GetName().Name));
 
-            db = new EventsContext(optionsBuilder.Options);
+            var db = new EventsContext(optionsBuilder.Options);
 
             db.Database.EnsureDeleted();
 
             db.Database.Migrate();
             DataSeeder.Seed(db);
-        }
-
-        private EventsContext CreateDbContext()
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<EventsContext>();
-            optionsBuilder.UseSqlServer(GetConnectionString());
-            return new EventsContext(optionsBuilder.Options);
-        }
-
-        private string GetConnectionString()
-        {
-            return _msSqlContainer.GetConnectionString().Replace("master", "events");
-        }
-
-        //[ClassCleanup]
-        //public static void ClassCleanup(TestContext testContext)
-        //{
-        //    //_msSqlContainer.DisposeAsync().GetAwaiter().GetResult();
-        //}
-
-        [TestCleanup]
-        public void TestCleanup()
-        {
-            //_msSqlContainer.DisposeAsync().GetAwaiter().GetResult();
         }
 
         [DataTestMethod]
@@ -81,7 +29,7 @@ namespace IntegrationTests
         [DataRow(IsolationLevel.Snapshot, true)]
         [DataRow(IsolationLevel.RepeatableRead, true)]
         [DataRow(IsolationLevel.Serializable, true)]
-        public async Task MultipleThreadsTryBookingSameSeat_OnlyOneShoultBook(IsolationLevel? isolationLevel, bool shouldPass)
+        public async Task MultipleThreadsTryBookingSameSeat_OnlyOneShouldBook(IsolationLevel? isolationLevel, bool shouldPass)
         {
             if(isolationLevel == IsolationLevel.Snapshot)
             {
@@ -110,17 +58,17 @@ namespace IntegrationTests
             if(shouldPass)
             {
                 Assert.AreEqual(1, nonNullTickets.Count());
-                //Assert.AreEqual(1, db.Tickets.Count());
+                Assert.AreEqual(1, CreateDbContext().Tickets.Count());
             } 
             else
             {
                 Assert.AreNotEqual(1, nonNullTickets.Count());
-                //Assert.AreNotEqual(1, db.Tickets.Count());
+                Assert.AreNotEqual(1, CreateDbContext().Tickets.Count());
             }
         }
 
         [TestMethod]
-        public async Task MultipleThreadsTryBookingSameSeat_OnlyOneShoultBook_RowVersion()
+        public async Task MultipleThreadsTryBookingSameSeat_OnlyOneShouldBook_RowVersion()
         {
             var tasks = new List<Task<(TicketRowVersion, string)>>();
             for (int i = 0; i < 10; i++)
@@ -138,6 +86,7 @@ namespace IntegrationTests
             var tickets = tasks.Select(t => t.Result).ToList();
             var nonNullTickets = tickets.Where(s => s.Item1 != null).ToList();
             Assert.AreEqual(1, nonNullTickets.Count());
+            Assert.AreEqual(1, CreateDbContext().TicketsRowVersion.Count());
         }
     }
 }

@@ -1,66 +1,25 @@
 ﻿using FluentResults;
 using Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Concurrent;
 using System.Data;
 using System.Reflection;
-using Testcontainers.MsSql;
 
 namespace IntegrationTests
 {
     [TestClass]
-    public class EfConcurrencyIntegrationTests_TestQuestions
+    public class EfConcurrencyIntegrationTests_TestQuestions: IntegrationTestBase
     {
-        private static MsSqlContainer _msSqlContainer = new MsSqlBuilder().WithPortBinding(1433).Build();
-        private EventsContext db;
-
-        [ClassInitialize]
-        public static void ClassInitialize(TestContext testContext)
-        {
-            int tries = 0;
-            bool success = false;
-            do
-            {
-                try
-                {
-                    _msSqlContainer.StartAsync().GetAwaiter().GetResult();
-                    success = true;
-                }
-                catch
-                {
-                    tries++;
-                    if (tries > 3)
-                    {
-                        throw;
-                    }
-                    Thread.Sleep(1000);
-                }
-            } while (!success);
-        }
-
         [TestInitialize]
         public void TestInitialize()
         {
             var optionsBuilder = new DbContextOptionsBuilder<EventsContext>();
             optionsBuilder.UseSqlServer(GetConnectionString(), b => b.MigrationsAssembly(typeof(EventsContext).GetTypeInfo().Assembly.GetName().Name));
 
-            db = new EventsContext(optionsBuilder.Options);
+            var db = CreateDbContext();
 
             db.Database.EnsureDeleted();
 
             db.Database.Migrate();
-            DataSeeder.Seed(db);
-        }
-
-        private string GetConnectionString()
-        {
-            return _msSqlContainer.GetConnectionString().Replace("master", "events");
-        }
-        private EventsContext CreateDbContext()
-        {
-            var optionsBuilder = new DbContextOptionsBuilder<EventsContext>();
-            optionsBuilder.UseSqlServer(GetConnectionString());
-            return new EventsContext(optionsBuilder.Options);
         }
 
         [DataTestMethod]
