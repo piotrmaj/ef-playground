@@ -13,6 +13,7 @@ namespace Infrastructure
         public DbSet<TicketRowVersion> TicketsRowVersion { get; set; }
 
         public DbSet<TestQuestion> TestQuestions { get; set; }
+        public DbSet<TestQuestionRowVersion> TestQuestionsRowVersion { get; set; }
 
         public EventsContext() { }
 
@@ -31,6 +32,13 @@ namespace Infrastructure
                 options.UseSqlServer();
             }
         } 
+    }
+
+    public class TestQuestionRowVersion: RowVersioned
+    {
+        public int Id { get; set; }
+        public int TestId { get; set; }
+        public string Text { get; set; }
     }
 
     public class TestQuestion

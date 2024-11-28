@@ -51,5 +51,31 @@ namespace Infrastructure
             transaction?.CommitAsync();
             return Result.Ok(toAdd);
         }
+
+        public async Task<Result<List<TestQuestion>>> AddQuestionsForTestRowVersioned(int testId, List<string> texts)
+        {
+            try
+            {
+                var existing = await _eventsContext.TestQuestions.AnyAsync(q => q.TestId == testId);
+
+                if (existing)
+                {
+                    return Result.Fail($"{nameof(TestQuestion)}s for {nameof(testId)}={testId} already exists");
+                }
+                var toAdd = texts.Select(t => new TestQuestion
+                {
+                    TestId = testId,
+                    Text = t,
+                }).ToList();
+                await _eventsContext.TestQuestions.AddRangeAsync(toAdd);
+                await Task.Delay(new Random().Next(0, 10));
+                await _eventsContext.SaveChangesAsync();
+                return toAdd;
+            }
+            catch (Exception ex)
+            {
+                return Result.Fail(ex.Message);
+            }
+        }
     }
 }

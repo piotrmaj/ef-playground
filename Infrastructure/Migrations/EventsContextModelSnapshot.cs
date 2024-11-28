@@ -150,6 +150,32 @@ namespace Infrastructure.Migrations
                     b.ToTable("TestQuestions");
                 });
 
+            modelBuilder.Entity("Infrastructure.TestQuestionRowVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("TestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TestQuestionsRowVersion");
+                });
+
             modelBuilder.Entity("Infrastructure.Ticket", b =>
                 {
                     b.Property<long>("Id")

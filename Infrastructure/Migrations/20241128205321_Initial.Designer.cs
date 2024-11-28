@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(EventsContext))]
-    [Migration("20241128200003_Initial")]
+    [Migration("20241128205321_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -151,6 +151,32 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TestQuestions");
+                });
+
+            modelBuilder.Entity("Infrastructure.TestQuestionRowVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("TestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TestQuestionsRowVersion");
                 });
 
             modelBuilder.Entity("Infrastructure.Ticket", b =>
