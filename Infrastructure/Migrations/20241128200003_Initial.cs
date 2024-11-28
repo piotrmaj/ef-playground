@@ -38,6 +38,20 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TestQuestions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TestId = table.Column<int>(type: "int", nullable: false),
+                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TestQuestions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Tickets",
                 columns: table => new
                 {
@@ -150,6 +164,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "SeatsRowVersion");
+
+            migrationBuilder.DropTable(
+                name: "TestQuestions");
 
             migrationBuilder.DropTable(
                 name: "Events");

@@ -7,7 +7,7 @@ using Testcontainers.MsSql;
 namespace IntegrationTests
 {
     [TestClass]
-    public class EfConcurrencyIntegrationTests
+    public class EfConcurrencyIntegrationTests_Events
     {
         private static MsSqlContainer _msSqlContainer = new MsSqlBuilder().WithPortBinding(1433).Build();
         private EventsContext db;

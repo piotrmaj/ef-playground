@@ -12,6 +12,8 @@ namespace Infrastructure
         public DbSet<SeatRowVersion> SeatsRowVersion { get; set; }
         public DbSet<TicketRowVersion> TicketsRowVersion { get; set; }
 
+        public DbSet<TestQuestion> TestQuestions { get; set; }
+
         public EventsContext() { }
 
         public EventsContext(DbContextOptions<EventsContext> options) : base(options)
@@ -29,6 +31,13 @@ namespace Infrastructure
                 options.UseSqlServer();
             }
         } 
+    }
+
+    public class TestQuestion
+    {
+        public int Id { get; set; }
+        public int TestId { get; set; }
+        public string Text { get; set; }
     }
 
     public class Event
