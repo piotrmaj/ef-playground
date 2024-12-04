@@ -2,7 +2,6 @@
 using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
-using System.Reflection;
 
 namespace IntegrationTests
 {
@@ -10,16 +9,9 @@ namespace IntegrationTests
     public class EfConcurrencyIntegrationTests_TestQuestions : IntegrationTestBase
     {
         [TestInitialize]
-        public void TestInitialize()
+        public async Task TestInitialize()
         {
-            var optionsBuilder = new DbContextOptionsBuilder<EventsContext>();
-            optionsBuilder.UseSqlServer(GetConnectionString(), b => b.MigrationsAssembly(typeof(EventsContext).GetTypeInfo().Assembly.GetName().Name));
-
-            var db = CreateDbContext();
-
-            db.Database.EnsureDeleted();
-
-            db.Database.Migrate();
+            await ResetDbAsync();
         }
 
         [DataTestMethod]

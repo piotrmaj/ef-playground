@@ -1,24 +1,18 @@
 using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
-using System.Reflection;
 
 namespace IntegrationTests
 {
     [TestClass]
-    public class EfConcurrencyIntegrationTests_Events: IntegrationTestBase
+    public class EfConcurrencyIntegrationTests_Events : IntegrationTestBase
     {
         [TestInitialize]
-        public void TestInitialize()
+        public async Task TestInitialize()
         {
-            var optionsBuilder = new DbContextOptionsBuilder<EventsContext>();
-            optionsBuilder.UseSqlServer(GetConnectionString(), b => b.MigrationsAssembly(typeof(EventsContext).GetTypeInfo().Assembly.GetName().Name));
+            await ResetDbAsync();
 
-            var db = new EventsContext(optionsBuilder.Options);
-
-            db.Database.EnsureDeleted();
-
-            db.Database.Migrate();
+            var db = CreateDbContext();
             DataSeeder.Seed(db);
         }
 
@@ -31,7 +25,7 @@ namespace IntegrationTests
         [DataRow(IsolationLevel.Serializable, true)]
         public async Task MultipleThreadsTryBookingSameSeat_OnlyOneShouldBook(IsolationLevel? isolationLevel, bool shouldPass)
         {
-            if(isolationLevel == IsolationLevel.Snapshot)
+            if (isolationLevel == IsolationLevel.Snapshot)
             {
                 CreateDbContext().Database.ExecuteSqlRaw("ALTER DATABASE [events] SET ALLOW_SNAPSHOT_ISOLATION ON");
             }
@@ -46,7 +40,7 @@ namespace IntegrationTests
                 var t = Task.Run(async () =>
                 {
                     var svc = new BookService(CreateDbContext());
-                    var ticket =  await svc.BookSeatTransaction(1, 1, 1, isolationLevel);
+                    var ticket = await svc.BookSeatTransaction(1, 1, 1, isolationLevel);
                     return ticket;
                 });
                 tasks.Add(t);
@@ -55,11 +49,11 @@ namespace IntegrationTests
             await Task.WhenAll(tasks);
             var tickets = tasks.Select(t => t.Result).ToList();
             var nonNullTickets = tickets.Where(s => s.Item1 != null).ToList();
-            if(shouldPass)
+            if (shouldPass)
             {
                 Assert.AreEqual(1, nonNullTickets.Count());
                 Assert.AreEqual(1, CreateDbContext().Tickets.Count());
-            } 
+            }
             else
             {
                 Assert.AreNotEqual(1, nonNullTickets.Count());
